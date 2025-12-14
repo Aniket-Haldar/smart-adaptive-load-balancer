@@ -1,10 +1,15 @@
 package routing
 
-import "github.com/sbirmecha99/smart-adaptive-load-balancer/internal/core"
+import (
+	"sync"
+
+	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/core"
+)
 
 // RoundRobinRouter selects backends in circular order
 type RoundRobinRouter struct {
 	current int
+	mu      sync.Mutex
 }
 
 func NewRoundRobinRouter() *RoundRobinRouter {
@@ -18,22 +23,27 @@ func (rr *RoundRobinRouter) GetNextAvailableServer(
 	backends []*core.Backend,
 ) *core.Backend {
 
+	rr.mu.Lock()
+	defer rr.mu.Unlock()
+
 	n := len(backends)
 	if n == 0 {
 		return nil
 	}
 
-	//checking each server
 	for i := 0; i < n; i++ {
 		idx := (rr.current + i) % n
 		backend := backends[idx]
 
-		if backend.Alive {
-			rr.current = idx + 1
+		backend.Mutex.Lock()
+		alive := backend.Alive
+		backend.Mutex.Unlock()
+
+		if alive {
+			rr.current = (idx + 1) % n
 			return backend
 		}
 	}
 
-	//if no alive , then nil returned
 	return nil
 }

@@ -1,6 +1,9 @@
 package core
 
-import "time"
+import (
+	"time"
+	"sync"
+)
 
 type Backend struct{
 	Address string
@@ -9,4 +12,5 @@ type Backend struct{
 	ActiveConns int64
 	Latency time.Duration
 	ErrorCount int64
+	Mutex sync.Mutex
 }
