@@ -4,9 +4,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/api"
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/core"
+	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/health"
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/proxy/l4"
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/proxy/l7"
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/routing"
@@ -32,6 +34,13 @@ func main() {
 	http.Handle("/metrics", api.MetricsHandler(pool))
 	http.Handle("/admin/add", api.AddServerHandler(&pool))
 
+	//health checker
+	checker:= &health.Checker{
+		Backends: pool,
+		Interval: 5*time.Second,
+		Timeout: 2*time.Second,
+	}
+	checker.Start()
 	//mode switch
 	if mode == "L4" {
 		log.Println("Starting L4 TCP Load Balancer on :8080")
