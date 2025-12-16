@@ -1,28 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Live Load Balancer Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <h1 class="header">Live Adaptive Load Balancer Dashboard</h1>
+    <header class="header">
+      <h1>Live Adaptive Load Balancer</h1>
+      <p>Real-time visualization of routing & backend health</p>
+    </header>
 
     <div class="controls">
-      <label for="algo">Routing Algorithm:</label>
-      <select id="algo">
-        <option value="roundrobin">Round-Robin</option>
+      <label for="algo">Routing Algorithm</label>
+      <select id="algo" class="select-box">
+        <option value="roundrobin">Round Robin</option>
         <option value="leastconnections">Least Connections</option>
         <option value="random">Random</option>
       </select>
     </div>
 
-    <canvas id="simulation" width="900" height="420"></canvas>
+    <div class="canvas-wrapper">
+      <canvas id="simulation" width="900" height="420"></canvas>
+    </div>
 
     <div class="legend">
-      <p>🟢 Alive Backend</p>
-      <p>🔴 Down Backend</p>
+      <span><i class="alive"></i> Alive Backend</span>
+      <span><i class="down"></i> Down Backend</span>
+      <span><i class="request"></i> Request</span>
     </div>
   </div>
 

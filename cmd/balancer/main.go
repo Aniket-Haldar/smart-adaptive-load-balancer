@@ -36,12 +36,14 @@ func main() {
 
 	// Start dummy backends
 	startDummyBackend("9001")
-	startDummyBackend("9002")
+	//startDummyBackend("9002")
+	startDummyBackend("9003")
 
 	// Backend pool
 	pool := []*core.Backend{
 		{Address: "localhost:9001", Alive: true},
 		{Address: "localhost:9002", Alive: true},
+		{Address: "localhost:9003", Alive: true},
 	}
 
 	router := routing.NewRoundRobinRouter()
