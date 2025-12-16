@@ -35,17 +35,20 @@ function draw() {
   // Backends
   backends.forEach(b => {
     ctx.fillStyle = b.Alive ? '#22c55e' : '#ef4444';
-    ctx.fillRect(b.x, b.y, 120, 50);
+    ctx.fillRect(b.x, b.y, 140, 60);
+
     ctx.fillStyle = '#fff';
-    ctx.fillText(`${b.Address}`, b.x + 5, b.y + 20);
-    ctx.fillText(`Conn: ${b.ActiveConns}`, b.x + 5, b.y + 40);
+    ctx.fillText(b.Address, b.x + 5, b.y + 18);
+    ctx.fillText(`Conn: ${b.ActiveConns}`, b.x + 5, b.y + 34);
+    ctx.fillText(`Latency: ${b.Latency}µs`, b.x + 5, b.y + 50);
+    ctx.fillText(`Errors: ${b.ErrorCount}`, b.x + 90, b.y + 34);
   });
 
   // Requests
   requests.forEach(r => {
     ctx.fillStyle = '#facc15';
     ctx.beginPath();
-    ctx.arc(r.x, r.y, 7, 0, Math.PI * 2);
+    ctx.arc(r.x, r.y, 6, 0, Math.PI * 2);
     ctx.fill();
 
     r.x += 6;
@@ -110,18 +113,22 @@ async function fetchMetrics() {
 
     // First-time init
     if (!backends.length) {
-      backends = data.map(b => ({
-        ...b,
-        ActiveConns: b.ActiveConns || 0
-      }));
+      backends = data.map(b => ({ ...b }));
       setBackendPositions();
-    } else {
-      // Update existing backend objects
-      data.forEach((b, i) => {
-        backends[i].Alive = b.Alive;
-        backends[i].Latency = b.Latency;
-      });
+      return;
     }
+
+    // Update existing backends by Address
+    data.forEach(metricBackend => {
+      const local = backends.find(
+        b => b.Address === metricBackend.Address
+      );
+      if (!local) return;
+
+      local.Alive = metricBackend.Alive;
+      local.Latency = metricBackend.Latency;
+      local.ErrorCount = metricBackend.ErrorCount;
+    });
 
     // Simulate traffic
     if (Math.random() > 0.4) sendRequest();

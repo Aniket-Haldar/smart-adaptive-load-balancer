@@ -1,48 +1,89 @@
-/* General Body Styles */
+/* ---------------- GLOBAL ---------------- */
 body {
     background-color: #111827; /* bg-gray-900 */
-    color: #ffffff; /* text-white */
-    padding: 1.5rem; /* p-6 */
-    font-family: Arial, sans-serif;
+    color: #ffffff;
+    padding: 1.5rem;
+    font-family: 'Inter', Arial, sans-serif;
 }
 
-/* Main Content Container */
+* {
+    box-sizing: border-box;
+}
+
+/* ---------------- CONTAINER ---------------- */
 .container {
-    /* Optional: Center the content or give it a max-width if needed */
-    max-width: 900px;
+    max-width: 960px;
     margin: 0 auto;
 }
 
-/* Header/Title Styles */
+/* ---------------- HEADER ---------------- */
 .header {
-    font-size: 1.875rem; /* text-3xl */
-    font-weight: 700; /* font-bold */
-    margin-bottom: 1rem; /* mb-4 */
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #e5e7eb; /* gray-200 */
 }
 
-/* Controls Section Styles */
+/* ---------------- CONTROLS ---------------- */
 .controls {
-    margin-bottom: 1rem; /* mb-4 */
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
-/* Label Styles */
 .label {
-    margin-right: 0.5rem; /* mr-2 */
+    font-weight: 500;
+    color: #d1d5db; /* gray-300 */
 }
 
-/* Select Box Styles */
+/* Select box */
 .select-box {
-    color: #000000; /* text-black */
-    padding: 0.25rem; /* p-1 */
-    border-radius: 0.25rem; /* rounded */
+    background-color: #e5e7eb;
+    color: #111827;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
     border: none;
     outline: none;
+    font-size: 0.9rem;
     cursor: pointer;
 }
 
-/* Canvas Styles */
+.select-box:hover {
+    background-color: #f3f4f6;
+}
+
+/* ---------------- CANVAS ---------------- */
 .simulation-canvas {
-    border: 1px solid #4b5563; /* border border-gray-600 */
-    border-radius: 0.25rem; /* rounded */
-    display: block; /* Ensures it behaves nicely in the layout */
+    width: 100%;
+    background-color: #020617; /* darker contrast */
+    border: 1px solid #374151; /* gray-700 */
+    border-radius: 8px;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* ---------------- LEGEND ---------------- */
+.legend {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: #9ca3af; /* gray-400 */
+}
+
+.legend p {
+    margin: 0;
+}
+
+/* ---------------- SMALL SCREEN ---------------- */
+@media (max-width: 600px) {
+    .header {
+        font-size: 1.5rem;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

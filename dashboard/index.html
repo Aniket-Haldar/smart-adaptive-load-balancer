@@ -10,15 +10,20 @@
     <h1 class="header">Live Adaptive Load Balancer Dashboard</h1>
 
     <div class="controls">
-      <label for="algo" class="label">Routing Algorithm:</label>
-      <select id="algo" class="select-box">
+      <label for="algo">Routing Algorithm:</label>
+      <select id="algo">
         <option value="roundrobin">Round-Robin</option>
         <option value="leastconnections">Least Connections</option>
         <option value="random">Random</option>
       </select>
     </div>
 
-    <canvas id="simulation" width="800" height="400" class="simulation-canvas"></canvas>
+    <canvas id="simulation" width="900" height="420"></canvas>
+
+    <div class="legend">
+      <p>🟢 Alive Backend</p>
+      <p>🔴 Down Backend</p>
+    </div>
   </div>
 
   <script src="script.js"></script>
