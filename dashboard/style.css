@@ -1,0 +1,48 @@
+/* General Body Styles */
+body {
+    background-color: #111827; /* bg-gray-900 */
+    color: #ffffff; /* text-white */
+    padding: 1.5rem; /* p-6 */
+    font-family: Arial, sans-serif;
+}
+
+/* Main Content Container */
+.container {
+    /* Optional: Center the content or give it a max-width if needed */
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Header/Title Styles */
+.header {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 700; /* font-bold */
+    margin-bottom: 1rem; /* mb-4 */
+}
+
+/* Controls Section Styles */
+.controls {
+    margin-bottom: 1rem; /* mb-4 */
+}
+
+/* Label Styles */
+.label {
+    margin-right: 0.5rem; /* mr-2 */
+}
+
+/* Select Box Styles */
+.select-box {
+    color: #000000; /* text-black */
+    padding: 0.25rem; /* p-1 */
+    border-radius: 0.25rem; /* rounded */
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Canvas Styles */
+.simulation-canvas {
+    border: 1px solid #4b5563; /* border border-gray-600 */
+    border-radius: 0.25rem; /* rounded */
+    display: block; /* Ensures it behaves nicely in the layout */
+}
