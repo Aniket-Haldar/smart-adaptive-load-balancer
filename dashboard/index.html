@@ -3,36 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <title>Live Load Balancer Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style1.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <header class="header">
-      <h1>Live Adaptive Load Balancer</h1>
-      <p>Real-time visualization of routing & backend health</p>
-    </header>
 
-    <div class="controls">
-      <label for="algo">Routing Algorithm</label>
-      <select id="algo" class="select-box">
-        <option value="roundrobin">Round Robin</option>
-        <option value="leastconnections">Least Connections</option>
-        <option value="random">Random</option>
-      </select>
+    <h1>Adaptive Load Balancer Dashboard</h1>
+
+    <div class="card decision">
+      <h2>Current Decision</h2>
+      <p><span>Algorithm</span>: <b id="algo"></b></p>
+      <p><span>Reason</span>: <b id="reason"></b></p>
+      <p><span>Selected Backend</span>: <b id="selected"></b></p>
     </div>
 
-    <div class="canvas-wrapper">
-      <canvas id="simulation" width="900" height="420"></canvas>
+    <div class="card">
+      <h2>Backend Health</h2>
+      <table id="backend-table">
+        <thead>
+          <tr>
+            <th>Address</th>
+            <th>Alive</th>
+            <th>Conns</th>
+            <th>Latency</th>
+            <th>Errors</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
 
-    <div class="legend">
-      <span><i class="alive"></i> Alive Backend</span>
-      <span><i class="down"></i> Down Backend</span>
-      <span><i class="request"></i> Request</span>
+    <div class="card log">
+      <h2>Decision Log</h2>
+      <div id="log-box"></div>
     </div>
+
   </div>
 
-  <script src="script.js"></script>
+  <script src="script1.js"></script>
 </body>
 </html>

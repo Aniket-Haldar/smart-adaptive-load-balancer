@@ -2,36 +2,60 @@ package routing
 
 import (
 	"log"
+	"time"
+	"sync"
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/core"
 )
 
 type AdaptiveRouter struct {
+	pool *core.ServerPool
+
 	rr *RoundRobinRouter
 	lc *LeastConnectionsRouter
 	rn *RandomRouter
-	
+
 	currentAlgo string
 	reason       string
 	lastPicked   string
 }
+type Decision struct {
+    Time     time.Time `json:"time"`
 
-func NewAdaptiveRouter() *AdaptiveRouter {
+    Algo     string `json:"algo"`
+    Reason   string `json:"reason"`
+    Backend  string `json:"backend"`
+}
+
+var (
+	DecisionLog []Decision
+	decisionMu  sync.Mutex
+)
+
+
+
+func NewAdaptiveRouter(pool *core.ServerPool) *AdaptiveRouter {
 	return &AdaptiveRouter{
-		rr: NewRoundRobinRouter(),
-		lc: NewLeastConnectionsRouter(),
-		rn: NewRandomRouter(),
+		pool:        pool,
+		rr:          NewRoundRobinRouter(),
+		lc:          NewLeastConnectionsRouter(),
+		rn:          NewRandomRouter(),
 		currentAlgo: "roundrobin",
 		reason:      "normal_conditions",
 	}
 }
-func (ar *AdaptiveRouter) GetNextAvailableServer(
-	backends []*core.Backend,
-) *core.Backend {
+
+// ✅ SINGLE ENTRY POINT
+func (ar *AdaptiveRouter) Pick() *core.Backend {
+	backends := ar.pool.GetServers()
+	if len(backends) == 0 {
+		log.Println("[ADAPTIVE] no backends in pool")
+		return nil
+	}
 
 	var totalConns int64
 	var totalLatency int64
 	var totalErrors int64
-
+	var maxConns int64
 	aliveCount := 0
 
 	for _, b := range backends {
@@ -41,6 +65,9 @@ func (ar *AdaptiveRouter) GetNextAvailableServer(
 			totalConns += b.ActiveConns
 			totalLatency += int64(b.Latency)
 			totalErrors += b.ErrorCount
+			if b.ActiveConns > maxConns {
+				maxConns = b.ActiveConns
+			}
 		}
 		b.Mutex.Unlock()
 	}
@@ -52,44 +79,66 @@ func (ar *AdaptiveRouter) GetNextAvailableServer(
 
 	avgConns := totalConns / int64(aliveCount)
 	avgLatency := totalLatency / int64(aliveCount)
+	avgLatencyMs := avgLatency / int64(time.Millisecond)
+	errorRate := float64(totalErrors) / float64(totalConns+1)
 
-	if totalErrors > 0 {
-	ar.currentAlgo = "random"
-	ar.reason = "errors_detected"
-	b := ar.rn.GetNextAvailableServer(backends)
-	ar.lastPicked = b.Address
-	return b
-}
+	log.Printf("[ADAPTIVE] algo=%s reason=%s picked=%s avgConns=%d maxConns=%d avgLatencyMs=%d errorRate=%.2f",
+	ar.currentAlgo,
+	ar.reason,
+	ar.lastPicked,
+	avgConns,
+	maxConns,
+	avgLatency/int64(time.Millisecond),
+	errorRate,
+	)
 
-if avgConns > 3 {
-	ar.currentAlgo = "leastconnections"
-	ar.reason = "high_concurrency"
-	b := ar.lc.GetNextAvailableServer(backends)
-	ar.lastPicked = b.Address
-	return b
-}
+	var selected *core.Backend
 
-if avgLatency > 2_000_000 {
-	ar.currentAlgo = "leastconnections"
-	ar.reason = "high_latency"
-	b := ar.lc.GetNextAvailableServer(backends)
-	ar.lastPicked = b.Address
-	return b
-}
+	// 1️⃣ Error dominance
+	if errorRate > 0.3 {
+		ar.currentAlgo = "random"
+		ar.reason = "high_error_rate"
+		selected = ar.rn.GetNextAvailableServer(backends)
 
-ar.currentAlgo = "roundrobin"
-ar.reason = "normal_conditions"
-b := ar.rr.GetNextAvailableServer(backends)
-ar.lastPicked = b.Address
-return b
+		// 2️⃣ Load skew
+	} else if maxConns > 3 {
+		ar.currentAlgo = "leastconnections"
+		ar.reason = "high_concurrency"
+		selected = ar.lc.GetNextAvailableServer(backends)
 
-}
-func (ar *AdaptiveRouter) Name() string {
-	if ar.currentAlgo != "" {
-		return ar.currentAlgo // 🔹 frontend sees current algo dynamically
+		// 3️⃣ Latency degradation
+	} else if avgLatencyMs > 200 {
+		ar.currentAlgo = "leastconnections"
+		ar.reason = "high_latency"
+		selected = ar.lc.GetNextAvailableServer(backends)
+
+		// 4️⃣ Default
+	} else {
+		ar.currentAlgo = "roundrobin"
+		ar.reason = "normal_conditions"
+		selected = ar.rr.GetNextAvailableServer(backends)
 	}
-	return "adaptive"
+
+	if selected != nil {
+	ar.lastPicked = selected.Address
+
+	decisionMu.Lock()
+	DecisionLog = append(DecisionLog, Decision{
+		Time:    time.Now(),
+		Algo:    ar.currentAlgo,
+		Reason:  ar.reason,
+		Backend: selected.Address,
+	})
+	decisionMu.Unlock()
 }
+
+	return selected
+}
+// adaptive.go
+func (ar *AdaptiveRouter) GetNextAvailableServer(_ []*core.Backend) *core.Backend {
+    return ar.Pick()
+}
+func (ar *AdaptiveRouter) Name() string        { return "adaptive" }
 func (ar *AdaptiveRouter) CurrentAlgo() string { return ar.currentAlgo }
 func (ar *AdaptiveRouter) Reason() string      { return ar.reason }
 func (ar *AdaptiveRouter) LastPicked() string  { return ar.lastPicked }

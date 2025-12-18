@@ -1,45 +1,47 @@
 package health
 
-import(
+import (
 	"log"
 	"net"
 	"time"
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/core"
 )
 
-type Checker struct{
-	Backends []*core.Backend
+type Checker struct {
+	Pool     *core.ServerPool
 	Interval time.Duration
-	Timeout time.Duration
+	Timeout  time.Duration
 }
 
-//tcp level hea;thcheck (for l4 and l7)
-func(c *Checker)Start(){
-	ticker:=time.NewTicker(c.Interval)
+// TCP-level health check (works for L4 and L7)
+func (c *Checker) Start() {
+	ticker := time.NewTicker(c.Interval)
 
-	go func(){
-		for range ticker.C{
-			for _,backend:=range c.Backends{
+	go func() {
+		for range ticker.C {
+			backends := c.Pool.GetServers() // SAFE snapshot
+			for _, backend := range backends {
 				go c.checkBackend(backend)
 			}
 		}
 	}()
 }
 
-func (c *Checker) checkBackend(b *core.Backend){
-	start:=time.Now()
+func (c *Checker) checkBackend(b *core.Backend) {
+	start := time.Now()
 
-	conn,err:=net.DialTimeout("tcp",b.Address,c.Timeout)
+	conn, err := net.DialTimeout("tcp", b.Address, c.Timeout)
+
 	b.Mutex.Lock()
 	defer b.Mutex.Unlock()
 
-	if err!=nil{
-		b.Alive=false
-		log.Println("backend down:",b.Address)
+	if err != nil {
+		b.Alive = false
+		log.Printf("[HEALTH] backend DOWN: %s", b.Address)
 		return
 	}
 
-	_=conn.Close()
-	b.Alive=true
-	b.Latency=time.Since(start)
+	_ = conn.Close()
+	b.Alive = true
+	b.Latency = time.Since(start)
 }

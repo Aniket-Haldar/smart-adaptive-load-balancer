@@ -55,3 +55,4 @@ func (lc *LeastConnectionsRouter) GetNextAvailableServer(
 
 	return selected
 }
+func (lc *LeastConnectionsRouter) Name() string { return "LeastConnections" }

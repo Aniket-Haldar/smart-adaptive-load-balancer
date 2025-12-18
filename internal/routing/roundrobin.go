@@ -49,3 +49,4 @@ func (rr *RoundRobinRouter) GetNextAvailableServer(
 
 	return nil
 }
+func (rr *RoundRobinRouter) Name() string { return "RoundRobin" }

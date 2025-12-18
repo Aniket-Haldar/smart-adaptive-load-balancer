@@ -23,8 +23,11 @@ func startDummyBackend(port string) {
 		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Hello from backend %s", port)
 		})
-		log.Printf("Starting dummy backend on %s\n", port)
-		log.Fatal(http.ListenAndServe(":"+port, mux))
+
+		log.Printf("[DUMMY] starting backend on :%s\n", port)
+		if err := http.ListenAndServe(":"+port, mux); err != nil {
+			log.Printf("[DUMMY %s] crashed: %v", port, err)
+		}
 	}()
 }
 
@@ -36,52 +39,75 @@ func main() {
 
 	// Start dummy backends
 	startDummyBackend("9001")
-	//startDummyBackend("9002")
+	startDummyBackend("9002")
 	startDummyBackend("9003")
 
-	// Backend pool
-	pool := []*core.Backend{
-		{Address: "localhost:9001", Alive: true},
-		{Address: "localhost:9002", Alive: true},
-		{Address: "localhost:9003", Alive: true},
-	}
+	// Backend pool (THREAD SAFE)
+	// --------------------------------------------------
+	pool := core.NewServerPool()
+	pool.AddServer(&core.Backend{Address: "localhost:9001",
+	 Alive: true,
+	 ErrorCount: 5,
+	 ActiveConns: 1,
+	})
+	pool.AddServer(&core.Backend{Address: "localhost:9002", Alive: true})
+	pool.AddServer(&core.Backend{Address: "localhost:9003", Alive: true})
 
-	router := routing.NewRoundRobinRouter()
+	// Adaptive router (STATEFUL)
+	// --------------------------------------------------
+	router := routing.NewAdaptiveRouter(pool)
 
-	// 🔹 SINGLE mux for everything
+	// --------------------------------------------------
+	// HTTP mux
+	// --------------------------------------------------
 	mux := http.NewServeMux()
 
 	// Metrics & admin
-	mux.Handle("/metrics", api.MetricsHandler(pool))
-	mux.Handle("/admin/add", api.AddServerHandler(&pool))
+	mux.Handle("/metrics", api.MetricsHandler(pool.GetServers()))
+	mux.Handle("/admin/add", api.AddServerHandler(pool))
 
+	// Status endpoint to see adaptive router behavior
+	mux.Handle("/status", api.StatusHandler(router, pool.GetServers))
+
+	// --------------------------------------------------
 	// Health checker
+	// --------------------------------------------------
 	checker := &health.Checker{
-		Backends: pool,
+		Pool:     pool,
 		Interval: 5 * time.Second,
 		Timeout:  2 * time.Second,
 	}
 	checker.Start()
 
+	// --------------------------------------------------
+	// L4 MODE
+	// --------------------------------------------------
 	if mode == "L4" {
-		log.Println("Starting L4 TCP Load Balancer on :8080")
+		log.Println("[MAIN] Starting L4 TCP Load Balancer on :8080")
+
 		tcpProxy := &l4.TCPProxy{
-			Pool:   pool,
+			Pool:   pool.GetServers(),
 			Router: router,
 		}
+
 		log.Fatal(tcpProxy.Start(":8080"))
 		return
 	}
 
-	// L7 HTTP Proxy
-	log.Println("Starting L7 HTTP Load Balancer on :8080")
+	// --------------------------------------------------
+	// L7 MODE
+	// --------------------------------------------------
+	log.Println("[MAIN] Starting L7 HTTP Load Balancer on :8080")
+
 	httpProxy := &l7.HTTPProxy{
-		Pool:   pool,
+		Pool:   pool.GetServers(),
 		Router: router,
 	}
 	mux.Handle("/", httpProxy)
 
-	// 🔹 Apply CORS to entire mux
+	// --------------------------------------------------
+	// CORS (dev-safe)
+	// --------------------------------------------------
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),

@@ -51,3 +51,4 @@ func (rr *RandomRouter) GetNextAvailableServer(
 
 	return nil
 }
+func (rn *RandomRouter) Name() string { return "Random" }

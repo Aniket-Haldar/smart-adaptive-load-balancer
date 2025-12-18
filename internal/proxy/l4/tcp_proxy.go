@@ -62,6 +62,8 @@ func (p *TCPProxy) handleConnection(clientConn net.Conn) {
 
 	backend.Mutex.Lock()
 	backend.ActiveConns--
-	backend.Latency = time.Since(start)
+	lat := time.Since(start)
+	backend.Latency = (backend.Latency + lat) / 2
+
 	backend.Mutex.Unlock()
 }
