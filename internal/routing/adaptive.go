@@ -2,6 +2,7 @@ package routing
 
 import (
 	"log"
+	"fmt"
 	"time"
 	"sync"
 	"github.com/sbirmecha99/smart-adaptive-load-balancer/internal/core"
@@ -28,7 +29,7 @@ type Decision struct {
 
 var (
 	DecisionLog []Decision
-	decisionMu  sync.Mutex
+	DecisionMu  sync.Mutex
 )
 
 
@@ -97,7 +98,7 @@ func (ar *AdaptiveRouter) Pick() *core.Backend {
 	// 1️⃣ Error dominance
 	if errorRate > 0.3 {
 		ar.currentAlgo = "random"
-		ar.reason = "high_error_rate"
+		ar.reason = fmt.Sprintf("high_error_rate (%.2f)", errorRate)
 		selected = ar.rn.GetNextAvailableServer(backends)
 
 		// 2️⃣ Load skew
@@ -122,14 +123,14 @@ func (ar *AdaptiveRouter) Pick() *core.Backend {
 	if selected != nil {
 	ar.lastPicked = selected.Address
 
-	decisionMu.Lock()
+	DecisionMu.Lock()
 	DecisionLog = append(DecisionLog, Decision{
 		Time:    time.Now(),
 		Algo:    ar.currentAlgo,
 		Reason:  ar.reason,
 		Backend: selected.Address,
 	})
-	decisionMu.Unlock()
+	DecisionMu.Unlock()
 }
 
 	return selected

@@ -52,3 +52,14 @@ tr.down td {
 .log-entry.random { color: #facc15; }
 .log-entry.rr { color: #38bdf8; }
 .log-entry.lc { color: #a78bfa; }
+
+.card.log {
+  max-height: 280px;   /* adjust if you want 5–6 logs */
+  overflow: hidden;
+}
+
+#log-box {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 6px;
+}

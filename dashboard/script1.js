@@ -2,6 +2,8 @@ const STATUS_URL = "http://localhost:8080/status";
 
 // store previous error state to avoid repeated logs
 let backendDown = false;
+let lastLogTime = null;
+
 
 async function fetchStatus() {
   try {
@@ -36,19 +38,24 @@ async function fetchStatus() {
 
     // --- decision logs ---
     const logBox = document.getElementById("log-box");
-    logBox.innerHTML = "";
 
-    if (status.DecisionLog && status.DecisionLog.length > 0) {
-      // show all logs from backend
-      status.DecisionLog.slice(-50).forEach((entry) => {
-        const div = document.createElement("div");
-        div.className = `log-entry ${entry.Algo.toLowerCase()}`;
-        div.textContent = `[${new Date(entry.Time).toLocaleTimeString()}] ${
-          entry.Algo
-        } → ${entry.Backend} (${entry.Reason})`;
-        logBox.appendChild(div);
+    if (status.decision_log && status.decision_log.length > 0) {
+      status.decision_log.forEach((entry) => {
+        // only add logs newer than last rendered
+        if (!lastLogTime || new Date(entry.time) > lastLogTime) {
+          const div = document.createElement("div");
+          div.className = `log-entry ${entry.algo}`;
+          div.textContent = `[${new Date(entry.time).toLocaleTimeString()}] ${
+            entry.algo
+          } → ${entry.backend} (${entry.reason})`;
+
+          logBox.appendChild(div);
+          lastLogTime = new Date(entry.time);
+        }
       });
+
     }
+
   } catch (err) {
     console.error("Failed to fetch status:", err);
     // only show one error until backend recovers
@@ -57,7 +64,7 @@ async function fetchStatus() {
       const div = document.createElement("div");
       div.className = "log-entry error";
       div.textContent = `[${new Date().toLocaleTimeString()}] ERROR: Cannot reach backend`;
-      logBox.prepend(div);
+      logBox.appendChild(div);
       backendDown = true;
     }
 
