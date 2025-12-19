@@ -45,11 +45,7 @@ func main() {
 	// Backend pool (THREAD SAFE)
 	// --------------------------------------------------
 	pool := core.NewServerPool()
-	pool.AddServer(&core.Backend{Address: "localhost:9001",
-	 Alive: true,
-	 ErrorCount: 5,
-	 ActiveConns: 1,
-	})
+	pool.AddServer(&core.Backend{Address: "localhost:9001", Alive: true})
 	pool.AddServer(&core.Backend{Address: "localhost:9002", Alive: true})
 	pool.AddServer(&core.Backend{Address: "localhost:9003", Alive: true})
 
